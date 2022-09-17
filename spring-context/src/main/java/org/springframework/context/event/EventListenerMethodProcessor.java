@@ -142,12 +142,14 @@ public class EventListenerMethodProcessor
 	}
 
 	private void processBean(final String beanName, final Class<?> targetType) {
+		//判断是否已经在没有@EventListener注解的集合中
 		if (!this.nonAnnotatedClasses.contains(targetType) &&
 				!targetType.getName().startsWith("java") &&
 				!isSpringContainerClass(targetType)) {
 
 			Map<Method, EventListener> annotatedMethods = null;
 			try {
+				//通过反射找到存在当前注解的方法
 				annotatedMethods = MethodIntrospector.selectMethods(targetType,
 						(MethodIntrospector.MetadataLookup<EventListener>) method ->
 								AnnotatedElementUtils.findMergedAnnotation(method, EventListener.class));
