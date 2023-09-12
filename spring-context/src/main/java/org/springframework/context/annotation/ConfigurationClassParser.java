@@ -608,15 +608,18 @@ class ConfigurationClassParser {
 						// Candidate class is an ImportBeanDefinitionRegistrar ->
 						// delegate to it to register additional bean definitions
 						Class<?> candidateClass = candidate.loadClass();
+						// 通过反射创建ImportBeanDefinitionRegistrar实例
 						ImportBeanDefinitionRegistrar registrar =
 								BeanUtils.instantiateClass(candidateClass, ImportBeanDefinitionRegistrar.class);
+						// 执行ImportBeanDefinitionRegistrar的初始化AWare方法。
+						// 包括：BeanClassLoaderAware,BeanFactoryAware,EnvironmentAware,ResourceLoaderAware
 						ParserStrategyUtils.invokeAwareMethods(registrar, this.environment, this.resourceLoader, this.registry);
-
+						// 将当前的配置类注册到ImportBeanDefinitionRegistrar中
 						configClass.addImportBeanDefinitionRegistrar(registrar, currentSourceClass.getMetadata());
-					}
-					else {
+					} else {
 						// Candidate class not an ImportSelector or ImportBeanDefinitionRegistrar ->
 						// process it as an @Configuration class
+						//不是ImportSelector或ImportBeanDefinitionRegistrar->将其作为@Configuration类处理
 						this.importStack.registerImport(
 								currentSourceClass.getMetadata(), candidate.getMetadata().getClassName());
 						processConfigurationClass(candidate.asConfigClass(configClass));
