@@ -240,7 +240,8 @@ class ConfigurationClassParser {
 	 * @return the superclass, or {@code null} if none found or previously processed
 	 */
 	@Nullable
-	protected final SourceClass doProcessConfigurationClass(ConfigurationClass configClass, SourceClass sourceClass)
+	protected final SourceClass doProcessConfigurationClass(ConfigurationClass configClass, //构建的配置类
+															SourceClass sourceClass)//对应的类（构建的bean类）
 			throws IOException {
 
 		// 处理@Component注解和@Configuration注解。@Configuration注解上也标注的是@Component，被@Configuration标注的配置类本身也是一个bean组件
@@ -588,6 +589,9 @@ class ConfigurationClassParser {
 						// 执行selector的初始化AWare方法。包括：BeanClassLoaderAware,BeanFactoryAware,EnvironmentAware,ResourceLoaderAware
 						ParserStrategyUtils.invokeAwareMethods(selector, this.environment, this.resourceLoader, this.registry);
 						if (selector instanceof DeferredImportSelector) {
+							// 如果实现了DeferredImportSelector接口，将其添加到deferredImportSelectorHandler中
+							// 用于在解析完所有的配置类之后，再去处理这些DeferredImportSelector
+							// 例如：org.springframework.boot.autoconfigure.AutoConfigurationImportSelector
 							this.deferredImportSelectorHandler.handle(configClass, (DeferredImportSelector) selector);
 						}
 						else {
@@ -783,6 +787,8 @@ class ConfigurationClassParser {
 		 * selectors are being collected, this registers this instance to the list. If
 		 * they are being processed, the {@link DeferredImportSelector} is also processed
 		 * immediately according to its {@link DeferredImportSelector.Group}.
+		 * 处理指定的延迟导入选择器。如果正在收集延迟导入选择器，
+		 * 则将此实例注册到列表中。如果正在处理它们，则根据其组立即处理延迟导入选择器。
 		 * @param configClass the source configuration class
 		 * @param importSelector the selector to handle
 		 */
@@ -791,7 +797,9 @@ class ConfigurationClassParser {
 					configClass, importSelector);
 			if (this.deferredImportSelectors == null) {
 				DeferredImportSelectorGroupingHandler handler = new DeferredImportSelectorGroupingHandler();
+				// 注册DeferredImportSelectorHolder
 				handler.register(holder);
+				// 处理@Import注解导入的类
 				handler.processGroupImports();
 			}
 			else {
@@ -837,9 +845,10 @@ class ConfigurationClassParser {
 
 		public void processGroupImports() {
 			for (DeferredImportSelectorGrouping grouping : this.groupings.values()) {
-				grouping.getImports().forEach(entry -> {
-					ConfigurationClass configurationClass = this.configurationClasses.get(
-							entry.getMetadata());
+				// 获取@Import注解导入的类
+				grouping.getImports()
+						.forEach(entry -> {
+					ConfigurationClass configurationClass = this.configurationClasses.get(entry.getMetadata());
 					try {
 						processImports(configurationClass, asSourceClass(configurationClass),
 								asSourceClasses(entry.getImportClassName()), false);
@@ -911,9 +920,11 @@ class ConfigurationClassParser {
 		 */
 		public Iterable<Group.Entry> getImports() {
 			for (DeferredImportSelectorHolder deferredImport : this.deferredImports) {
+				// 调用DeferredImportSelector的selectImports方法，获取@Import注解导入的类
 				this.group.process(deferredImport.getConfigurationClass().getMetadata(),
 						deferredImport.getImportSelector());
 			}
+			// 调用DeferredImportSelector的selectImports方法，获取@Import注解导入的类
 			return this.group.selectImports();
 		}
 	}
@@ -925,6 +936,7 @@ class ConfigurationClassParser {
 
 		@Override
 		public void process(AnnotationMetadata metadata, DeferredImportSelector selector) {
+			// 调用DeferredImportSelector的selectImports方法，获取@Import注解导入的类
 			for (String importClassName : selector.selectImports(metadata)) {
 				this.imports.add(new Entry(metadata, importClassName));
 			}
