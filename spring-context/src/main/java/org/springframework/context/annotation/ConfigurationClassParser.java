@@ -232,6 +232,8 @@ class ConfigurationClassParser {
 	}
 
 	/**
+	 * 应用处理并通过从源类中读取注释、成员和方法来构建完整 ConfigurationClass 。
+	 * 当发现相关源时，可以多次调用此方法。
 	 * Apply processing and build a complete {@link ConfigurationClass} by reading the
 	 * annotations, members and methods from the source class. This method can be called
 	 * multiple times as relevant sources are discovered.
